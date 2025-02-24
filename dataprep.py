@@ -12,8 +12,10 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.svm import SVR
+from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Lasso
@@ -46,32 +48,31 @@ class DataExtractor():
 
 	def model_charging(self):
 		models ={
-			'linear regression':{
-			'model':LinearRegression(),
-			'parameters':{}
-		},
-
-'		lasso':{ 'model':Lasso(),
-		'parameters':{
-		'alpha':	[1, 2],
-		'selection':['random', 'cyclic']}},
-
-		'svr':{'model':SVR(),
-			'parameters':{
-			'gamma':	['auto', 'scale']
-		}
-		},
-
-		'random_forest':{'model':RandomForestRegressor(criterion = 'squared_error'),
-		'parameters':{
-		'n_estimators':	[5, 10, 15, 20]
-	}
-},
-		'knn':{
-		'model':KNeighborsRegressor(algorithm = 'auto'),
-		'parameters':{
-		'n_neighbors':	[2, 5, 10, 20]}}
-}
+			'random_forest':{
+				'model':RandomForestClassifier(),
+				'parameters':{
+					'n_estimators': [50, 100, 200],
+					'max_depth': [None, 10, 20],
+					'min_samples_split': [2,5,10]
+				}
+			},
+		
+			'decision_tree':{
+				'model':DecisionTreeClassifier(criterion = 'gini'),
+				'parameters':{
+					'max_depth': [None,10,20],
+					'min_samples_split': [2,5,10]
+				}
+			},
+			'svm':{
+				'model':SVC(),
+				'parameters':{
+					'C': [0.1,1,10],
+					'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+					'gamma': ['scale', 'auto']
+				}
+			}
+		}	
 
 		return models
 
@@ -112,29 +113,32 @@ class DataExtractor():
 
 	def model_selection(self,data, models):
 		#COMMENED LINES BELONGS TO THE CHANCE OF BEING A REGRESSION PROBLEM
-		#model = data.loc[data['score'].idxmax(), 'model']
+		model = data.loc[data['score'].idxmax(), 'model']
+		self.parameters = data.loc[data['score'].idxmax(), 'best_parameters']
 		self.oneh = OneHotEncoder(sparse_output = False)
 		self.label = LabelEncoder()
 
-		#selected_model = models[model]
-		#self.selected_model = selected_model['model']
-		self.selected_model = RandomForestClassifier(max_depth = 10, n_estimators = 100)
+		selected_model = models[model]
+		self.selected_model = selected_model['model']
 
-		features = self.dataset.drop('Industry Sector', axis = 'columns')
-		encoded_features = self.oneh.fit_transform(features)
-		features_dataframe = pd.DataFrame(encoded_features)
-		self.encoded_columns = features_dataframe.columns
+		print(self.selected_model)
+		print(self.parameters)
+		
+		# features = self.dataset.drop('Industry Sector', axis = 'columns')
+		# encoded_features = self.oneh.fit_transform(features)
+		# features_dataframe = pd.DataFrame(encoded_features)
+		# self.encoded_columns = features_dataframe.columns
 
-		labels = self.dataset['Industry Sector']
-		encoded_labels = self.label.fit_transform(labels)
+		# labels = self.dataset['Industry Sector']
+		# encoded_labels = self.label.fit_transform(labels)
 
-		x_train, x_test, y_train, y_test = train_test_split(encoded_features, encoded_labels, test_size = 0.2, random_state = 0)
+		# x_train, x_test, y_train, y_test = train_test_split(encoded_features, encoded_labels, test_size = 0.2, random_state = 0)
 
-		self.selected_model.fit(x_train, y_train)
-		predictions = self.selected_model.predict(x_test)
-		error = mean_squared_error(y_test, predictions)
-		print(f"Training time output {predictions.shape}")
-		print(f"Error in training time {error * 100:.2f}%")
+		# self.selected_model.fit(x_train, y_train)
+		# predictions = self.selected_model.predict(x_test)
+		# error = mean_squared_error(y_test, predictions)
+		# print(f"Training time output {predictions.shape}")
+		# print(f"Error in training time {error * 100:.2f}%")
 
 	def new_predictions(self, new_data):
 		#new_data = new_data.drop('Industry Sector', axis = 1)
@@ -214,9 +218,9 @@ new_data_extractor.datapreparer(route)
 models = new_data_extractor.model_charging()
 
 #THIS WOULD BE USED IF IT WAS A REGRESSION PROBLEM
-#data = new_data_extractor.grid_preprocessor()
+data = new_data_extractor.grid_preprocessor(models)
 
-data = "NON USED IN CLASSIFICATION, ONLY ON REGRESSION"
+
 new_data_extractor.model_selection(data, models)
 
 new_data = pd.DataFrame([[
@@ -225,21 +229,21 @@ new_data = pd.DataFrame([[
              'Potential Accident Level', 'Genre', 'Employee ou Terceiro', 'Risco Critico'])
 
 
-new_data = new_data.reindex(columns = new_data_extractor.encoded_columns, fill_value = 0)
-prediction = new_data_extractor.new_predictions(new_data)
+#new_data = new_data.reindex(columns = new_data_extractor.encoded_columns, fill_value = 0)
+#prediction = new_data_extractor.new_predictions(new_data)
 #new_data_extractor.get_encoding_info(prediction)
 
-new_data_extractor.multi_level_classification()
+#new_data_extractor.multi_level_classification()
 
 
-new_multi = pd.DataFrame([[
-    '2016-01-01 00:00:00', 'Local_01', 'I', 'IV',  'Pressed'
-]], columns=['Data',  'Local', 'Accident Level',
-             'Potential Accident Level', 'Risco Critico'])
+#new_multi = pd.DataFrame([[
+#    '2016-01-01 00:00:00', 'Local_01', 'I', 'IV',  'Pressed'
+#]], columns=['Data',  'Local', 'Accident Level',
+#             'Potential Accident Level', 'Risco Critico'])
 
-new_multi = new_data.reindex(columns = new_data_extractor.encoded_multi, fill_value = 0)
-multi_prediction = new_data_extractor.new_multipredictions_(new_multi)
+#new_multi = new_data.reindex(columns = new_data_extractor.encoded_multi, fill_value = 0)
+#multi_prediction = new_data_extractor.new_multipredictions_(new_multi)
 #new_data_extractor.get_encoding_info(prediction)
-new_data_extractor.get_multiencoding_info(multi_prediction)
+#new_data_extractor.get_multiencoding_info(multi_prediction)
 
 
