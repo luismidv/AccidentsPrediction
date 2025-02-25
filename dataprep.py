@@ -143,7 +143,9 @@ class DataExtractor():
 
         selected_model = models[model]
         self.selected_model = selected_model['model']
+        self.model_plot = selected_model['model']
         self.selected_model.set_params(**self.parameters)
+        self.model_plot.set_params(**self.parameters)
 
         features = self.dataset.drop('Industry Sector', axis = 'columns')
 
@@ -226,17 +228,16 @@ class DataExtractor():
 
     def check_learning_curve(self):
         
-        train_sizes, train_scores, test_scores = learning_curve(self.selected_model, self.encoded_features, self.encoded_labels, cv = 5, scoring="accuracy", 
+        train_sizes, train_scores, test_scores = learning_curve(self.model_plot, self.encoded_features, self.encoded_labels, cv = 5, scoring="accuracy", 
                                                                 train_sizes = np.linspace(0.1,1.0,10), n_jobs = -1)
         
         train_mean = train_scores.mean(axis = 1)
         test_mean = test_scores.mean(axis = 1)
         train_std = train_scores.std(axis = 1)
-        test_std = train_scores.std(axis = 1)
+        test_std = test_scores.std(axis = 1)
 
         plt.figure(figsize=(8, 6))
 
-        plt.plot(train_sizes, train_mean, label="Training Score", color="g", marker="o")
         plt.plot(train_sizes, test_mean, label="Validation Score", color="r", marker="o")
 
         plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.2, color="g")
