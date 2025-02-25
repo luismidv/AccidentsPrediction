@@ -134,7 +134,7 @@ class DataExtractor():
         return pd.DataFrame(scores, columns =['model', 'best_parameters', 'score'])
 
     def model_selection(self,data, models):
-        #COMMENED LINES BELONGS TO THE CHANCE OF BEING A REGRESSION PROBLEM
+        
         
         model = data.loc[data['score'].idxmax(), 'model']
         self.parameters = data.loc[data['score'].idxmax(), 'best_parameters']
@@ -143,9 +143,9 @@ class DataExtractor():
 
         selected_model = models[model]
         self.selected_model = selected_model['model']
-        self.model_plot = selected_model['model']
         self.selected_model.set_params(**self.parameters)
-        self.model_plot.set_params(**self.parameters)
+        self.model_plot = self.selected_model
+        
 
         features = self.dataset.drop('Industry Sector', axis = 'columns')
 
@@ -172,7 +172,7 @@ class DataExtractor():
         return predictions
 
     def new_predictions(self, new_data):
-        #new_data = new_data.drop('Industry Sector', axis = 1)
+        
         new_data_encoded = pd.get_dummies(new_data)
         predictions = self.selected_model.predict(new_data_encoded)
         print(f"Normal prediction shape {predictions.shape}")
@@ -246,8 +246,6 @@ class DataExtractor():
         plt.ylabel("Accuracy")
         plt.title("Learning Curve: Training vs Validation")
         plt.legend()
-
-# Show plot
         plt.show()
 
 
@@ -268,14 +266,14 @@ class DataExtractor():
 route = "./archive/IHMStefanini_industrial_safety_and_health_database.csv"
 new_data_extractor = DataExtractor()
 new_data_extractor.datapreparer(route)
-#new_data_extractor.redundant_data()
+
 
 new_data_extractor.data_visualization_sns()
 
-#THIS WOULD BE USED IF IT WAS A REGRESSION PROBLEM
+
 models = new_data_extractor.model_charging()
 
-#THIS WOULD BE USED IF IT WAS A REGRESSION PROBLEM
+
 data = new_data_extractor.grid_preprocessor(models)
 
 
