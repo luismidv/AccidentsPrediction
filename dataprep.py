@@ -23,6 +23,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.multioutput import MultiOutputClassifier
 import matplotlib.pyplot as plt
 import seaborn as sns
+import joblib
 
 
 class DataExtractor():
@@ -36,13 +37,18 @@ class DataExtractor():
         else:
             print("There is no missing data")
 
+    def data_replacing(self):
+        self.dataset.replace(['Country_01', 'Country_02', 'Country_03'], ['Spain', 'Germany', 'USA'], inplace = True)
+        self.dataset.replace(['Local_01', 'Local_02', 'Local_03'], ['Madrid', 'Berlin', 'New York'], inplace = True)
+        
     def data_visualization_sns(self):
         sector_accidents = self.dataset['Industry Sector'].value_counts()
         genre_accidents = self.dataset['Genre'].value_counts()
         employee_third = self.dataset['Employee ou Terceiro'].value_counts()
         accident_level = self.dataset['Accident Level'].value_counts()
+        country_accidents = self.dataset['Countries'].value_counts()
     
-        fig,axes = plt.subplots(1,4,figsize = (20,5))
+        fig,axes = plt.subplots(1,5,figsize = (20,5))
 
         axes[0].pie(sector_accidents, labels = sector_accidents.index, autopct = '%1.1f%%', colors=['gold', 'skyblue', 'lightgreen'], startangle=90)
         axes[0].set_title('Accidents in each sector')
@@ -55,6 +61,9 @@ class DataExtractor():
 
         axes[3].pie(accident_level, labels = accident_level.index, autopct = '%1.1f%%', colors=['orange', 'brown', 'black', 'yellow', 'pink'], startangle=90)
         axes[3].set_title('Accident level')
+        
+        axes[4].pie(country_accidents, labels = country_accidents.index, autopct = '%1.1f%%', colors=['orange', 'brown', 'black'], startangle=90)
+        axes[4].set_title('Accidents in each country')
 
         plt.show()
 
@@ -159,6 +168,7 @@ class DataExtractor():
         x_train, x_test, y_train, y_test = train_test_split(self.encoded_features, self.encoded_labels, test_size = 0.2, random_state = 0)
         
         self.selected_model.fit(x_train, y_train)
+        joblib.dump(self.selected_model, 'model.pkl')
         train_prediction = self.selected_model.predict(x_train)
         self.train_error = accuracy_score(y_train, train_prediction)
 
@@ -182,7 +192,7 @@ class DataExtractor():
 
     def get_encoding_info(self, prediction):
         output_decoded = self.label.inverse_transform(prediction)
-        print(f"Categories: \n {output_decoded}")
+        return output_decoded
 
 
 
@@ -263,32 +273,33 @@ class DataExtractor():
         riesgo_critico = input("What is the critico?")
 
 
-route = "./archive/IHMStefanini_industrial_safety_and_health_database.csv"
+
 new_data_extractor = DataExtractor()
-new_data_extractor.datapreparer(route)
+
+#new_data_extractor.datapreparer(route)
+#new_data_extractor.data_replacing()
+
+#new_data_extractor.data_visualization_sns()
 
 
-new_data_extractor.data_visualization_sns()
+#models = new_data_extractor.model_charging()
 
 
-models = new_data_extractor.model_charging()
+#data = new_data_extractor.grid_preprocessor(models)
 
 
-data = new_data_extractor.grid_preprocessor(models)
+#new_data_extractor.model_selection(data, models)
+
+# new_data = pd.DataFrame([[
+#     '2016-01-01 00:00:00', 'Country_01', 'Local_01', 'I', 'IV', 'Male', 'Third Party', 'Pressed'
+# ]], columns=['Data', 'Countries', 'Local',  'Accident Level',
+#              'Potential Accident Level', 'Genre', 'Employee ou Terceiro', 'Risco Critico'])
 
 
-new_data_extractor.model_selection(data, models)
-
-new_data = pd.DataFrame([[
-    '2016-01-01 00:00:00', 'Country_01', 'Local_01', 'I', 'IV', 'Male', 'Third Party', 'Pressed'
-]], columns=['Data', 'Countries', 'Local',  'Accident Level',
-             'Potential Accident Level', 'Genre', 'Employee ou Terceiro', 'Risco Critico'])
-
-
-new_data = new_data.reindex(columns = new_data_extractor.encoded_columns, fill_value = 0)
-prediction = new_data_extractor.new_predictions(new_data)
-new_data_extractor.get_encoding_info(prediction)
-new_data_extractor.check_learning_curve()
+#new_data = new_data.reindex(columns = new_data_extractor.encoded_columns, fill_value = 0)
+#prediction = new_data_extractor.new_predictions(new_data)
+#new_data_extractor.get_encoding_info(prediction)
+#new_data_extractor.check_learning_curve()
 
 #new_data_extractor.multi_level_classification()
 
